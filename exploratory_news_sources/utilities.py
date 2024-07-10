@@ -6,7 +6,9 @@ DIME Artificial Intelligence (DIME AI) - World Bank Group
 Date: 2024-07-04
 
 Description:
-This file contains utility functions used to explore the capabilities of the GNews API.
+This file contains utility functions used to explore the capabilities of different APIs for news data retrieval.
+In particular, section 1 contains functions to fetch news data using the GNews API, while section 2 contains functions
+to clean and save Factiva most mentioned sources data.
 """
 
 from gnews import GNews
@@ -14,7 +16,13 @@ import datetime as dt
 from dateutil.relativedelta import relativedelta
 import numpy as np
 import pandas as pd
+import os
+import re
 
+
+# -------------------------
+# 1. GNews API Functions
+# -------------------------
 def get_news_data(query_word: str, start_date: dt.date, end_date_last: dt.date, country: str = None, language: str = 'english', delta: str = None) -> pd.DataFrame:
     '''    
     Fetches news article metadata for a given query_word within a specified date range.
@@ -156,3 +164,78 @@ def save_metadata_table(article_metadata: pd.DataFrame, query_word: str, start_d
     query_specification = f"{query_word_joined}_{country}_{start_date.month}_{start_date.day}_{start_date.year}__{end_date_last.month}_{end_date_last.day}_{end_date_last.year}"
     article_metadata.to_csv(data_path + "meta_" + query_specification + ".csv", index=False)
     print(f"Metadata successfully saved to {data_path + 'meta_' + query_specification + '.csv'}")
+
+# -------------------------
+# 2. Factiva API Functions
+# -------------------------
+def clean_factiva_most_mentioned_sources_expoert(data_path_raw, data_path_clean):
+    """
+    Cleans and saves Factiva most mentioned sources data.
+
+    Parameters:
+    - data_path_raw (str): The path to the directory containing the raw data files.
+    - data_path_clean (str): The path to the directory where the cleaned data files will be saved.
+
+    Returns:
+    None
+
+    The cleaning operations include:
+    - Loading the dataframe from the raw data file
+    - Extracting metadata from the header and excluding the header
+    - Resetting the index and renaming the columns based on the extracted metadata
+    - Extracting additional metadata from the footer
+    - Checking if the number of results in the header matches the number of results in the footer
+    - Setting the file name based on the extracted metadata
+    - Excluding footer metadata from the table
+    - Saving the cleaned dataframe as a CSV file
+
+    Note: This function assumes that the raw data files are in CSV format and have a specific structure 
+    with metadata in the header and footer.
+    """
+    
+    raw_files = [f for f in os.listdir(data_path_raw) if not f.startswith('.')]
+    
+    for file in raw_files:
+        
+        # Load the dataframe
+        print(f"Cleaning file: {file}")
+        df = pd.read_csv(data_path_raw + file, sep=',', skiprows=1)
+
+        # Extract the metadata from the header, exclude the header and reset the index
+        no_results_header = int(re.findall(r'\d+', df.columns[0])[0])
+        df.reset_index(inplace=True)
+        df.columns = df.iloc[0].values
+        df = df[1:].reset_index(drop=True)
+
+        # Exclude the metadata from the footer
+        language = df.loc[df["Source"] == "Language", "Document Count"].values[0].lower()[:3]
+         
+        region = df.loc[df["Source"] == "Region", "Document Count"].values[0]
+        region = region.replace(" ", "_")
+        
+        date = df.loc[df["Source"] == "Date", "Document Count"].values[0]
+        from_date = date.split(" to ")[0].replace("/", "")
+        to_date = date.split(" to ")[1].replace("/", "")
+
+        text = df.loc[df["Source"] == "Text", "Document Count"].values[0]
+
+        no_results = df.loc[df["Source"] == "Results Found", "Document Count"].values[0]
+        no_results = int(no_results.replace(",", ""))
+
+        # Check if the number of results in the header is the same as in the footer
+        assert no_results == no_results_header, f"The number of results is the not the same as in the header for {file} ({region}). \n Make sure you select all results on Factiva before downloading!"
+
+        # Set the file name based on the extracted metadata
+        if np.isnan(text): 
+            file_name = f"{region}_{from_date}_{to_date}_{language}_{no_results}.csv"
+        else:
+            file_name = f"{region}_{text}_{from_date}_{to_date}_{language}_{no_results}.csv"
+
+        # Exclude footer metadata from table    
+        df = df.iloc[:-13]
+
+        # Sace the dataframe as a csv file
+        df.to_csv(data_path_clean + file_name, index=False)
+        print(f"File saved: {file_name}\n")
+    
+    print(f"\n All files cleaned and saved under {data_path_clean}!")
