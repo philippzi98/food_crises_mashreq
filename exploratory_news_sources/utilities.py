@@ -203,15 +203,15 @@ def clean_factiva_most_mentioned_sources_expoert(data_path_raw, data_path_clean)
 
         # Extract the metadata from the header, exclude the header and reset the index
         no_results_header = int(re.findall(r'\d+', df.columns[0])[0])
-        df.reset_index(inplace=True)
-        df.columns = df.iloc[0].values
-        df = df[1:].reset_index(drop=True)
-
+        df.reset_index(inplace=True, drop=True)
+        df.columns = df.iloc[1].values
+        df = df[2:].reset_index(drop=True)
+        
         # Exclude the metadata from the footer
         language = df.loc[df["Source"] == "Language", "Document Count"].values[0].lower()[:3]
          
         region = df.loc[df["Source"] == "Region", "Document Count"].values[0]
-        region = region.replace(" ", "_")
+        region = region.replace(" ", "_").lower()
         
         date = df.loc[df["Source"] == "Date", "Document Count"].values[0]
         from_date = date.split(" to ")[0].replace("/", "")
@@ -227,12 +227,12 @@ def clean_factiva_most_mentioned_sources_expoert(data_path_raw, data_path_clean)
 
         # Set the file name based on the extracted metadata
         if np.isnan(text): 
-            file_name = f"{region}_{from_date}_{to_date}_{language}_{no_results}.csv"
+            file_name = f"{region}_{from_date}_{to_date}_{language}_{no_results}_factiva.csv"
         else:
-            file_name = f"{region}_{text}_{from_date}_{to_date}_{language}_{no_results}.csv"
+            file_name = f"{region}_{text}_{from_date}_{to_date}_{language}_{no_results}_factiva.csv"
 
         # Exclude footer metadata from table    
-        df = df.iloc[:-13]
+        df = df.iloc[:-14]
 
         # Sace the dataframe as a csv file
         df.to_csv(data_path_clean + file_name, index=False)
