@@ -22,12 +22,14 @@ if args.language:
     
     
 # Input paths
-keywords_and_location_names_path = "../../data/final/keywords_and_location_names/"
+keywords_and_location_names_path = "../data/final/keywords_and_location_names/"
 
 
 #################
 # 1. Loading Input 
 #################
+
+print(f"\nLoading inputs:")
 
 # 1. Loading dictionaries containing relevant keywords and location names
 if language == "English":
@@ -38,7 +40,8 @@ if language == "Arabic":
     keywords_dict = pd.read_pickle(keywords_and_location_names_path + 'id_arabic_keyword.pkl')
     location_names_dict = pd.read_pickle(keywords_and_location_names_path + 'id_arabic_location_name.pkl')
 
-print("Keyword and location dictionaries loaded.")
+print(f"Keyword dictionary loaded.")
+print(f"Location dictionary loaded.")
 
 
 # 2. Loading the articles downloaded from NewsAPI
@@ -47,12 +50,14 @@ news_articles = pd.read_csv(input_file_path)
 if "userHasPermissions" in news_articles.columns:
     news_articles = news_articles.drop(columns=['userHasPermissions'])
 
-print(f"Input file loaded from {input_file_path}.")
+print(f"News articles loaded from specified file path.")
 
 
 #################
 # 2. Processing
 #################
+
+print(f"\nProcessing articles:")
 
 def article_length_lower_case(df:pd.DataFrame) -> pd.DataFrame:
     """
@@ -123,14 +128,15 @@ location_names = get_all_names_variants_in_value_lists(location_names_dict)
 vocabulary = np.unique(np.concatenate([keyword_names, location_names]))
 
 # The CountVectorizer requires as input the numbers of ngrams to consider, so we need to find the maximum number of ngrams required
-ngrams_upper_bound_eng = np.max([len(word.split(" ")) for word in vocabulary])
-print(f"The upper bound for the n-grams is {ngrams_upper_bound_eng}")
+ngrams_upper_bound = np.max([len(word.split(" ")) for word in vocabulary])
+print(f"Size of largest n-gram in vocabulary: {ngrams_upper_bound}")
 
 # Lowercasing the articles and adding columns for the length of the articles
 news_articles = article_length_lower_case(news_articles)
 
+print(f"Counting keywords and locations in articles...")
 # Count vectorization
-count_output = CountVectorizer(vocabulary=vocabulary, ngram_range=(1, ngrams_upper_bound_eng)).fit_transform(news_articles["body"].values).toarray()
+count_output = CountVectorizer(vocabulary=vocabulary, ngram_range=(1, ngrams_upper_bound)).fit_transform(news_articles["body"].values).toarray()
 count_df = pd.DataFrame(count_output, columns=vocabulary)
 
 # Summing the counts of the different spellings of the keywords and locations
@@ -154,4 +160,4 @@ output_file_name = input_file_path.split("/")[-1].split(".")[0] + "_counts.csv"
 
 news_articles.to_csv(output_file_folder + output_file_name, index=False)
 
-print(f"Output saved to {output_file_folder + output_file_name}")
+print(f"\nOutput saved to {output_file_folder + output_file_name}")
