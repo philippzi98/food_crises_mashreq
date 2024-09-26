@@ -7,18 +7,16 @@ import argparse
 # Loading the input arguments
 parser = argparse.ArgumentParser()
 parser.add_argument("--input_file_path", help="Path to the input file containing downloaded articles", required=True)
-parser.add_argument("--output_file_folder", help="Folder in which the output files will be saved", required=True)
+parser.add_argument("--output_file_path", help="Path where the output file will be saved", required=True)
 parser.add_argument("--language", help="Either Arabic or English", required=True)
 
 args = parser.parse_args()
 
-if args.input_file_path:
-    input_file_path = args.input_file_path
-if args.output_file_folder:
-    output_file_folder = args.output_file_folder
-if args.language:
-    language = args.language
-    assert language in ["Arabic", "English"], "Language must be either Arabic or English"
+input_file_path = args.input_file_path
+output_file_path = args.output_file_path
+
+language = args.language
+assert language in ["Arabic", "English"], "Language must be either Arabic or English"
     
     
 # Input paths
@@ -143,10 +141,10 @@ count_df = pd.DataFrame(count_output, columns=vocabulary)
 keyword_location_df = count_keyword_and_location(count_df, keywords_dict, location_names_dict)
 
 # Merge the article data with the keyword counts
-news_articles = news_articles.merge(keyword_location_df, left_index=True, right_index=True)
+news_articles_with_keyword_counts = news_articles.merge(keyword_location_df, left_index=True, right_index=True)
 
 # Add a column that sums over the mentions of all keywords
-news_articles["kw_all"] = news_articles[list(keywords_dict.keys())].sum(axis=1)
+news_articles_with_keyword_counts["kw_all"] = news_articles_with_keyword_counts[list(keywords_dict.keys())].sum(axis=1)
 
 print(f"Articles processed and keyword counts added.")
 
@@ -156,8 +154,6 @@ print(f"Articles processed and keyword counts added.")
 # 3. Saving Output
 #################
 
-output_file_name = input_file_path.split("/")[-1].split(".")[0] + "_counts.csv"
+news_articles_with_keyword_counts.to_csv(output_file_path, index=False)
 
-news_articles.to_csv(output_file_folder + output_file_name, index=False)
-
-print(f"\nOutput saved to {output_file_folder + output_file_name}")
+print(f"\nOutput saved to: \n{output_file_path}")
