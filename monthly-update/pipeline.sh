@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Setting variables
-input_file_path="../data/final/downloads_newsapi/Mashreq_2024-06-23_2024-07-24_articles_eng.csv"
-output_file_folder="../data/final/keyword_location_counts/"
+input_file_path="../../data/final/downloads_newsapi/Mashreq_2024-06-23_2024-07-24_articles_eng.csv"
+output_file_folder="../../data/final/keyword_location_counts/"
 language="English"
 
 # Extract the file name from the input path (basename removes the directory path)

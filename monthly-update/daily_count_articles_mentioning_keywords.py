@@ -19,7 +19,7 @@ assert language in ["Arabic", "English"], "Language must be either Arabic or Eng
     
     
 # Input paths
-keywords_and_location_names_path = "../data/final/keywords_and_location_names/"
+keywords_and_location_names_path = "../../data/final/keywords_and_location_names/"
 
 
 #################
@@ -159,8 +159,9 @@ daily_count_of_articles_mentioning_keyword_per_location["admin_level"] = daily_c
 # Insert a column for the language
 daily_count_of_articles_mentioning_keyword_per_location.insert(3, "language", language, allow_duplicates=False)
 
-print(f"Articles processed and keyword counts added.")
+daily_count_of_articles_mentioning_keyword_per_location.reset_index(inplace=True)
 
+print(f"Articles processed and keyword counts added.")
 
 
 #################

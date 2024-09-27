@@ -20,7 +20,7 @@ assert language in ["Arabic", "English"], "Language must be either Arabic or Eng
     
     
 # Input paths
-keywords_and_location_names_path = "../data/final/keywords_and_location_names/"
+keywords_and_location_names_path = "../../data/final/keywords_and_location_names/"
 
 
 #################
